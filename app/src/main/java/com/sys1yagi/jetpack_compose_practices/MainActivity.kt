@@ -1,8 +1,10 @@
 package com.sys1yagi.jetpack_compose_practices
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
+import androidx.ui.core.ContextAmbient
 import androidx.ui.core.Text
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Clickable
@@ -12,7 +14,6 @@ import androidx.ui.layout.Column
 import androidx.ui.layout.LayoutHeight
 import androidx.ui.layout.LayoutPadding
 import androidx.ui.layout.LayoutWidth
-import androidx.ui.material.AppBarIcon
 import androidx.ui.material.MaterialTheme
 import androidx.ui.material.TopAppBar
 import androidx.ui.material.ripple.Ripple
@@ -45,21 +46,35 @@ fun MainPage() {
         }
     }
 }
+
+@Composable
 fun PracticeList() {
+    val context = ContextAmbient.current
+    val notYetImplemented =
+            { Toast.makeText(context, "not yet implemented.", Toast.LENGTH_SHORT).show() }
     VerticalScroller {
         Column {
-            Ripple(bounded = true) {
-                Clickable(onClick = {}) {
-                    Card(
-                            modifier = LayoutPadding(16.dp) + LayoutWidth.Fill,
-                            shape = RoundedCornerShape(4.dp),
-                            elevation = 4.dp
-                    ) {
-                        Text("Clickable Card",
-                                modifier = LayoutPadding(16.dp)
-                        )
-                    }
-                }
+            Menu("Clickable Card", notYetImplemented)
+            Menu("Dialog", notYetImplemented)
+            Menu("Popup", notYetImplemented)
+            Menu("AdapterList", notYetImplemented)
+        }
+    }
+}
+
+@Composable
+fun Menu(title: String, onClick: () -> Unit) {
+    Ripple(bounded = true) {
+        Clickable(onClick = onClick) {
+            Card(
+                    modifier = LayoutPadding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp) + LayoutWidth.Fill,
+                    shape = RoundedCornerShape(4.dp),
+                    elevation = 4.dp
+            ) {
+                Text(
+                        title,
+                        modifier = LayoutPadding(16.dp)
+                )
             }
         }
     }
