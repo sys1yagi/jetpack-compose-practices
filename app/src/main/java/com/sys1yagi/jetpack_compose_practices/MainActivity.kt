@@ -1,80 +1,90 @@
 package com.sys1yagi.jetpack_compose_practices
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Composable
-import androidx.ui.core.ContextAmbient
+import androidx.compose.Providers
 import androidx.ui.core.Text
 import androidx.ui.core.setContent
-import androidx.ui.foundation.Clickable
-import androidx.ui.foundation.VerticalScroller
-import androidx.ui.foundation.shape.corner.RoundedCornerShape
+import androidx.ui.graphics.painter.ImagePainter
 import androidx.ui.layout.Column
 import androidx.ui.layout.LayoutHeight
-import androidx.ui.layout.LayoutPadding
-import androidx.ui.layout.LayoutWidth
+import androidx.ui.material.AppBarIcon
 import androidx.ui.material.MaterialTheme
 import androidx.ui.material.TopAppBar
-import androidx.ui.material.ripple.Ripple
-import androidx.ui.material.surface.Card
+import androidx.ui.res.imageResource
 import androidx.ui.res.stringResource
-import androidx.ui.tooling.preview.Preview
 import androidx.ui.unit.dp
+import com.github.zsoltk.compose.backpress.AmbientBackPressHandler
+import com.github.zsoltk.compose.backpress.BackPressHandler
+import com.github.zsoltk.compose.router.Router
+import com.sys1yagi.jetpack_compose_practices.page.clickablecard.ClickableCardPage
+import com.sys1yagi.jetpack_compose_practices.page.practicelist.PracticeListPage
 
 class MainActivity : AppCompatActivity() {
+    private val backPressHandler = BackPressHandler()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainPage()
+            Providers(
+                    AmbientBackPressHandler provides backPressHandler
+            ) {
+                MainPage()
+            }
+        }
+    }
+
+    override fun onBackPressed() {
+        println(backPressHandler)
+        if (!backPressHandler.handle()) {
+            super.onBackPressed()
         }
     }
 }
 
-@Preview
+sealed class MainRoute {
+    object PracticeList : MainRoute()
+    object ClickableCard : MainRoute()
+}
+
 @Composable
 fun MainPage() {
+    val rootBackPressHandler = AmbientBackPressHandler.current
     MaterialTheme {
         Column(
                 modifier = LayoutHeight.Fill
         ) {
-            TopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name)) },
-                    elevation = 2.dp
-            )
-            PracticeList()
-        }
-    }
-}
-
-@Composable
-fun PracticeList() {
-    val context = ContextAmbient.current
-    val notYetImplemented =
-            { Toast.makeText(context, "not yet implemented.", Toast.LENGTH_SHORT).show() }
-    VerticalScroller {
-        Column {
-            Menu("Clickable Card", notYetImplemented)
-            Menu("Dialog", notYetImplemented)
-            Menu("Popup", notYetImplemented)
-            Menu("AdapterList", notYetImplemented)
-        }
-    }
-}
-
-@Composable
-fun Menu(title: String, onClick: () -> Unit) {
-    Ripple(bounded = true) {
-        Clickable(onClick = onClick) {
-            Card(
-                    modifier = LayoutPadding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp) + LayoutWidth.Fill,
-                    shape = RoundedCornerShape(4.dp),
-                    elevation = 4.dp
-            ) {
-                Text(
-                        title,
-                        modifier = LayoutPadding(16.dp)
+            Router<MainRoute>(defaultRouting = MainRoute.PracticeList) { backStack ->
+                val routing = backStack.last()
+                TopAppBar(
+                        title = { Text(stringResource(id = R.string.app_name)) },
+                        elevation = 2.dp,
+                        navigationIcon = backButtonOrNull(routing, rootBackPressHandler)
                 )
+                when (routing) {
+                    is MainRoute.PracticeList -> {
+                        PracticeListPage { route ->
+                            backStack.push(route)
+                        }
+                    }
+                    is MainRoute.ClickableCard -> {
+                        ClickableCardPage()
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun backButtonOrNull(routing: MainRoute, rootBackPressHandler: BackPressHandler): (@Composable() () -> Unit)? {
+    return when (routing) {
+        is MainRoute.PracticeList -> null
+        else -> {
+            {
+                AppBarIcon(icon = ImagePainter(imageResource(id = R.drawable.ic_action_back)), onClick = {
+                    rootBackPressHandler.handle()
+                })
             }
         }
     }
